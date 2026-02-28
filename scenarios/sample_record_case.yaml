@@ -1,0 +1,54 @@
+{
+  "id": "record_case_001",
+  "description": "Record veterinary interaction and generate note",
+  "preconditions": [
+    {
+      "install_apk": "build/app/outputs/flutter-apk/app-release.apk"
+    },
+    {
+      "force_stop": "com.vetnovia.app"
+    },
+    {
+      "reset_app_data": true,
+      "package": "com.vetnovia.app"
+    },
+    {
+      "launch_app": {
+        "package": "com.vetnovia.app",
+        "activity": "com.vetnovia.app.MainActivity"
+      }
+    }
+  ],
+  "steps": [
+    {
+      "goal": "Login with valid credentials",
+      "inputs": {
+        "email": "qa@vetnovia.local",
+        "password": "Password123!"
+      },
+      "expected": [
+        "Home screen visible"
+      ]
+    },
+    {
+      "goal": "Navigate to recording screen and begin recording"
+    },
+    {
+      "goal": "Inject sample audio and submit recording",
+      "tool_calls": [
+        {
+          "mcp_audio_play": {
+            "filename": "samples/case_001.wav"
+          }
+        }
+      ]
+    },
+    {
+      "goal": "Verify note appears in today's notes",
+      "expected": [
+        "SOAP structure visible",
+        "Note not empty"
+      ]
+    }
+  ]
+}
