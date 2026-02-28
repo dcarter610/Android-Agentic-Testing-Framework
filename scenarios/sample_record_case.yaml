@@ -6,16 +6,16 @@
       "install_apk": "build/app/outputs/flutter-apk/app-release.apk"
     },
     {
-      "force_stop": "com.vetnovia.app"
+      "force_stop": "com.example.app"
     },
     {
       "reset_app_data": true,
-      "package": "com.vetnovia.app"
+      "package": "com.example.app"
     },
     {
       "launch_app": {
-        "package": "com.vetnovia.app",
-        "activity": "com.vetnovia.app.MainActivity"
+        "package": "com.example.app",
+        "activity": "com.example.app.MainActivity"
       }
     }
   ],
@@ -23,7 +23,7 @@
     {
       "goal": "Login with valid credentials",
       "inputs": {
-        "email": "qa@vetnovia.local",
+        "email": "qa@example.local",
         "password": "Password123!"
       },
       "expected": [

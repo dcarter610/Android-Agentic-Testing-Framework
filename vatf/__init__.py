@@ -1,1 +1,1 @@
-"""V-ATF package."""
+"""Android Agentic Testing Framework package."""

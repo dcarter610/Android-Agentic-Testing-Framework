@@ -9,10 +9,10 @@ from .interfaces import DashboardServer
 
 
 HTML = """<!doctype html>
-<html><head><meta charset='utf-8'><title>V-ATF Dashboard</title>
+<html><head><meta charset='utf-8'><title>AATF Dashboard</title>
 <style>body{font-family:Arial;margin:20px}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:6px}pre{background:#f7f7f7;padding:10px}</style>
 </head><body>
-<h1>V-ATF Runs</h1>
+<h1>AATF Runs</h1>
 <div id='runs'></div>
 <script>
 async function load(){

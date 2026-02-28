@@ -1,4 +1,4 @@
-# Vetnovia Android Agentic Testing Framework (V-ATF)
+# Android Agentic Testing Framework (AATF)
 
 An agent-driven Android regression framework where the LLM decides *what to do next* and MCP tools execute actions on a device/emulator.
 
@@ -34,7 +34,7 @@ LLM Agent  ⇄  MCP Tool Layer
                  ├── MCP Device Control (ADB)
                  └── MCP Audio Playback
      ↓
-Android Emulator (Vetnovia app)
+Android Emulator (target app)
      ↓
 Artifacts + Results
      ↓
@@ -49,10 +49,10 @@ Web Dashboard
 
 ## Device/Emulator startup behavior
 
-By default, V-ATF does **not** start an Android emulator process for you.
+By default, AATF does **not** start an Android emulator process for you.
 
 - You should start an emulator/device before running tests.
-- You should make sure the Vetnovia app is installed and launchable, **or** provide scenario preconditions that call MCP device tools such as `device.install_apk` and `device.launch_app` via runner-managed setup logic.
+- You should make sure your target app is installed and launchable, **or** provide scenario preconditions that call MCP device tools such as `device.install_apk` and `device.launch_app` via runner-managed setup logic.
 
 In other words: the framework orchestrates through MCP tools once execution begins, but environment boot (emulator process lifecycle) is expected to be handled by your local/device infrastructure unless you add a dedicated device bootstrap MCP tool in your stack.
 

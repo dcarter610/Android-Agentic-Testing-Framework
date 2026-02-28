@@ -43,7 +43,7 @@ def mock_responder(messages: list[dict[str, Any]], schema_name: str) -> str:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(description="V-ATF runner")
+    p = argparse.ArgumentParser(description="Android agentic test runner")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     run = sub.add_parser("run", help="Run a single scenario")
