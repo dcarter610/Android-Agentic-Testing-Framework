@@ -1,0 +1,2 @@
+# Optional dependency for full YAML parsing support:
+# PyYAML>=6.0
