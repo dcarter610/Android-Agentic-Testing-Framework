@@ -34,15 +34,16 @@ class StructuredLLMProvider(LLMProvider):
 
     def chat_with_tools(self, messages: list[dict[str, Any]], schema_name: str) -> dict[str, Any]:
         prompt = schema_name
-        raw = self._responder(messages, prompt)
-        for _ in range(self._max_repair_attempts + 1):
+        raw = None
+        for attempt in range(self._max_repair_attempts + 1):
+            raw = self._responder(messages, prompt)
             try:
                 payload = json.loads(raw)
                 self._validate(payload, schema_name)
                 return payload
             except Exception as exc:  # noqa: BLE001
-                messages = messages + [{"role": "system", "content": f"Return valid JSON for {schema_name}: {exc}"}]
-                raw = self._responder(messages, prompt)
+                if attempt < self._max_repair_attempts:
+                    messages = messages + [{"role": "system", "content": f"Return valid JSON for {schema_name}: {exc}"}]
         raise ValueError(f"Unable to parse valid {schema_name} payload from model")
 
     @staticmethod

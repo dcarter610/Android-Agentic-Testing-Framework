@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import subprocess
 import time
 import uuid
@@ -108,38 +109,30 @@ class AgenticScenarioRunner:
         expected: list[str],
         tool_calls: list[dict[str, Any]],
     ) -> StepResult:
+        step_started = time.time()
         retries = 0
         while retries <= self.guardrails.max_retries_per_step:
             started = time.time()
             timeline: list[dict[str, Any]] = []
             action_count = 0
             passed = False
+            
+            for call in tool_calls:
+                timeline.append({"phase": "act", "payload": {"tool_call": call}, "ts": now_iso()})
+                # support explicit audio shorthand from scenarios
+                if "mcp_audio_play" in call:
+                    audio_args = call["mcp_audio_play"] if isinstance(call["mcp_audio_play"], dict) else {}
+                    self._run_audio_flow(audio_args, timeline)
+                    action_count += 1
+                    continue
+                # Expect one-key dict: {tool_name: args}
+                for name, args in call.items():
+                    self.tools.call(name, args if isinstance(args, dict) else {})
+                    action_count += 1
+            
             while time.time() - started <= self.guardrails.max_time_per_step_s and action_count < self.guardrails.max_actions_per_step:
                 obs = self._observe()
                 timeline.append({"phase": "observe", "payload": obs, "ts": now_iso()})
-
-                decision = self._decide(goal, inputs, expected, obs)
-                timeline.append({"phase": "decide", "payload": asdict(decision), "ts": now_iso()})
-
-                for call in tool_calls:
-                    timeline.append({"phase": "act", "payload": {"tool_call": call}, "ts": now_iso()})
-                    # support explicit audio shorthand from scenarios
-                    if "mcp_audio_play" in call:
-                        audio_args = call["mcp_audio_play"] if isinstance(call["mcp_audio_play"], dict) else {}
-                        self._run_audio_flow(audio_args, timeline)
-                        action_count += 1
-                        continue
-                    # Expect one-key dict: {tool_name: args}
-                    for name, args in call.items():
-                        self.tools.call(name, args if isinstance(args, dict) else {})
-                        action_count += 1
-
-                for action in decision.next_actions:
-                    resp = self.tools.call(action["tool"], action.get("args", {}))
-                    timeline.append({"phase": "act", "payload": {"action": action, "response": resp}, "ts": now_iso()})
-                    action_count += 1
-                    if action_count >= self.guardrails.max_actions_per_step:
-                        break
 
                 if self._has_crash(obs):
                     conclusion = StepConclusion(
@@ -150,6 +143,16 @@ class AgenticScenarioRunner:
                         improvement_suggestions=["Collect tombstone and inspect recent UI actions"],
                     )
                     return self._step_result(run_id, scenario.id, step_index, goal, retries, started, timeline, action_count, conclusion)
+
+                decision = self._decide(goal, inputs, expected, obs)
+                timeline.append({"phase": "decide", "payload": asdict(decision), "ts": now_iso()})
+
+                for action in decision.next_actions:
+                    resp = self.tools.call(action["tool"], action.get("args", {}))
+                    timeline.append({"phase": "act", "payload": {"action": action, "response": resp}, "ts": now_iso()})
+                    action_count += 1
+                    if action_count >= self.guardrails.max_actions_per_step:
+                        break
 
                 verify_obs = self._observe()
                 timeline.append({"phase": "verify", "payload": verify_obs, "ts": now_iso()})
@@ -172,7 +175,7 @@ class AgenticScenarioRunner:
             failure_category="TIMEOUT_OR_BUDGET",
             improvement_suggestions=["Refine selectors and assertions for this screen"],
         )
-        return self._step_result(run_id, scenario.id, step_index, goal, retries, time.time(), [], 0, fail)
+        return self._step_result(run_id, scenario.id, step_index, goal, retries, step_started, [], 0, fail)
 
     def _observe(self) -> dict[str, Any]:
         screenshot = self.tools.call("device.screenshot", {})
@@ -216,8 +219,10 @@ class AgenticScenarioRunner:
     @staticmethod
     def _has_crash(observation: dict[str, Any]) -> bool:
         log_text = str(observation.get("logcat", ""))
-        crash_signatures = ["FATAL EXCEPTION", "ANR in", "Process .* has died"]
-        return any(sig in log_text for sig in crash_signatures)
+        crash_signatures = ["FATAL EXCEPTION", "ANR in"]
+        if any(sig in log_text for sig in crash_signatures):
+            return True
+        return bool(re.search(r"Process .* has died", log_text))
 
     def _run_audio_flow(self, audio_args: dict[str, Any], timeline: list[dict[str, Any]]) -> None:
         filename = audio_args.get("filename")

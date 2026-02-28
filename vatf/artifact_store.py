@@ -9,7 +9,11 @@ from .models import write_json
 
 class FilesystemArtifactStore(ArtifactStore):
     def __init__(self, out_root: str = "out") -> None:
-        self.out_root = Path(out_root)
+        self._out_root = Path(out_root)
+
+    @property
+    def out_root(self) -> Path:
+        return self._out_root
 
     def scenario_dir(self, run_id: str, scenario_id: str) -> Path:
         d = self.out_root / run_id / scenario_id

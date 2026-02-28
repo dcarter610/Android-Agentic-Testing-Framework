@@ -26,6 +26,11 @@ class ScenarioRunner(ABC):
 
 
 class ArtifactStore(ABC):
+    @property
+    @abstractmethod
+    def out_root(self) -> Path:
+        ...
+
     @abstractmethod
     def scenario_dir(self, run_id: str, scenario_id: str) -> Path:
         ...
